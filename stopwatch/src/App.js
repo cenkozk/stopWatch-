@@ -1,13 +1,14 @@
 import "./App.css";
 import React from "react";
 import { Box, Stack } from "@mui/system";
-import { Button, Typography } from "@mui/material";
+import { Button, Divider, IconButton, Typography } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import PauseIcon from "@mui/icons-material/Pause";
 import DataRangeIcon from "@mui/icons-material/DateRange";
 import AccessTimeFilledIcon from "@mui/icons-material/AccessTimeFilled";
+import DeleteIcon from "@mui/icons-material/Delete";
 import Drawer from "react-bottom-drawer";
 import { motion } from "framer-motion";
 import Timer from "tiny-timer";
@@ -39,17 +40,14 @@ function App() {
     return gradients[num];
   }
 
-  const onClose = React.useCallback(() => {
-    setIsVisible(false);
-    console.log("ok1");
+  const onClose = () => {
     console.log(doesFloatingButtonClosed);
-    if (doesFloatingButtonClosed == true) {
-      console.log("ok");
+    if (doesFloatingButtonClosed == true && timer.status === "paused") {
       timer.resume();
       setIsTimeRunning(true);
-      setDoesFBC(false);
     }
-  }, []);
+    setIsVisible(false);
+  };
 
   function StartTimer() {
     timer.start(8553600000);
@@ -68,6 +66,17 @@ function App() {
       setTimeText(msTo);
     });
   }
+
+  function onFloatingButtonClick() {
+    setDoesFBC(true);
+    setIsTimeRunning(false);
+    timer.pause();
+    setIsVisible(true);
+  }
+
+  React.useEffect(() => {
+    console.log(doesFloatingButtonClosed);
+  }, [doesFloatingButtonClosed]);
 
   const onClickMainButton = () => {
     if (timer.status != "running" && timer.status === "stopped") {
@@ -105,15 +114,14 @@ function App() {
     setTimeText("00:00:00");
   }
 
-  const item = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        delayChildren: 0.2,
-      },
-    },
-  };
+  function deleteFromList(num) {
+    console.log(num);
+    setTimeData((prevArr) => prevArr.filter((item) => prevArr.indexOf(item) !== num));
+  }
+
+  React.useEffect(() => {
+    console.log(timeData);
+  }, [timeData]);
 
   return (
     <Box className="mainApp">
@@ -143,7 +151,8 @@ function App() {
               rotation: 90,
             }}
             whileTap={{ scale: 1.25 }}
-            transition={{ type: "spring", damping: 7, stiffness: 100, restDelta: 0.001, duration: 0.5 }}
+            whileHover={{ scale: isTimeRunning ? 1.25 : 1.1 }}
+            transition={{ type: "spring", damping: 9, stiffness: 100, restDelta: 0.001, duration: 0.5 }}
             className="mainButton"
             sx={{
               position: "relative",
@@ -224,12 +233,7 @@ function App() {
       </Box>
       {!isVisible && (
         <Button
-          onClick={() => {
-            setIsVisible(true);
-            setDoesFBC((prev) => true);
-            setIsTimeRunning(false);
-            timer.pause();
-          }}
+          onClick={onFloatingButtonClick}
           sx={{
             position: "absolute",
             right: "30px",
@@ -263,28 +267,37 @@ function App() {
       )}
       <Drawer isVisible={isVisible} onClose={onClose} className="drawer">
         {timeData.length != 0 ? (
-          timeData.map((e) => (
-            <Box
-              sx={{
-                margin: "20px",
-                borderRadius: "30px",
-                width: "85vw",
-                ...getGradient(),
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-around",
-              }}
-            >
-              <Stack direction="row" sx={{ margin: "20px" }}>
-                <DataRangeIcon sx={{ marginRight: "5px" }} />
-                <Typography sx={{ fontFamily: fontSerrat, fontSize: "18px" }}>{e.d}</Typography>
-              </Stack>
-              <Stack direction="row" sx={{ margin: "20px" }}>
-                <AccessTimeFilledIcon sx={{ marginRight: "5px" }} />
-                <Typography sx={{ fontFamily: fontSerrat, fontSize: "18px" }}>{e.t}</Typography>
-              </Stack>
-            </Box>
-          ))
+          timeData.map((e) => {
+            var isEven = timeData.indexOf(e) % 2 == 0 ? true : false;
+            return (
+              <Box
+                sx={{
+                  width: "100vw",
+                  backgroundColor: isEven ? "white" : "#2e2f41",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-around",
+                }}
+              >
+                <IconButton
+                  onClick={() => {
+                    deleteFromList(timeData.indexOf(e));
+                  }}
+                  sx={{ marginLeft: "10px", color: isEven ? "#2e2f41" : "white" }}
+                >
+                  <DeleteIcon />
+                </IconButton>
+                <Stack direction="row" sx={{ margin: "20px", color: isEven ? "#2e2f41" : "white" }}>
+                  <DataRangeIcon sx={{ marginRight: "5px" }} />
+                  <Typography sx={{ fontFamily: fontSerrat, fontSize: "18px" }}>{e.d}</Typography>
+                </Stack>
+                <Stack direction="row" sx={{ margin: "20px", color: isEven ? "#2e2f41" : "white" }}>
+                  <AccessTimeFilledIcon sx={{ marginRight: "5px" }} />
+                  <Typography sx={{ fontFamily: fontSerrat, fontSize: "18px" }}>{e.t}</Typography>
+                </Stack>
+              </Box>
+            );
+          })
         ) : (
           <div />
         )}
